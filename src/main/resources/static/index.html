@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinite Scroll Test</title>
+    <style>
+        /* 간단한 스타일링 */
+        .book {
+            border-bottom: 1px solid #ddd;
+            padding: 10px 0;
+        }
+    </style>
+</head>
+<body>
+<div id="book-container">
+    <!-- 책 목록이 이곳에 로드됩니다 -->
+</div>
+<script>
+    let cursor = null; // 초기 cursor 값은 null
+    let loading = false; // 데이터 로딩 상태 확인
+
+    // 데이터를 서버로부터 가져오는 함수
+    async function loadBooks() {
+        if (loading) return; // 이미 로딩 중이면 중복 로드 방지
+        loading = true;
+
+        const response = await fetch(`/api/library/book/scroll?cursor=${cursor}&size=6`);
+        const books = await response.json();
+
+        if (books.length > 0) {
+            const container = document.getElementById('book-container');
+
+            books.forEach(book => {
+                const bookElement = document.createElement('div');
+                bookElement.className = 'book';
+                bookElement.textContent = `${book.id}: ${book.title}`;
+                container.appendChild(bookElement);
+            });
+
+            // 마지막 항목의 ID를 cursor로 업데이트
+            cursor = books[books.length - 1].id;
+        }
+
+        loading = false;
+    }
+
+    // 스크롤 이벤트 감지하여 무한 스크롤 구현
+    window.addEventListener('scroll', () => {
+        if (window.innerHeight + window.scrollY >= document.body.offsetHeight) {
+            loadBooks(); // 페이지 끝에 도달할 때 새로운 데이터 로드
+        }
+    });
+
+    // 초기 데이터 로드
+    loadBooks();
+</script>
+</body>
+</html>
